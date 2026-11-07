@@ -276,8 +276,8 @@ header p{margin:0;max-width:66ch;color:var(--mat-muted)}
 .face .pup{position:absolute;inset:12px;border-radius:50%;overflow:hidden;transform:translateY(calc(var(--amp,0) * -4px)) scale(calc(1 + var(--amp,0) * .045));rotate:calc(var(--tilt,0) * 1deg);transform-origin:50% 80%}
 .face .pup[hidden]{display:none}
 .face .pup img{position:absolute;inset:0;width:100%;height:100%;border-radius:0;object-fit:cover;transform:none;rotate:none}
-.face .pmouth{position:absolute;left:calc((var(--mx) - var(--mw) * .42) * 1%);width:calc(var(--mw) * .84%);top:calc((var(--my) - .6) * 1%);height:calc((1 + var(--open,0) * 10) * 1%);opacity:min(1,calc(var(--open,0) * 6));border-radius:35% 35% 50% 50% / 25% 25% 75% 75%;background:radial-gradient(ellipse at 50% 85%,#c4555a 0 22%,#5a1616 45%,#250808 80%);box-shadow:inset 0 2px 0 1px #f6efe4}
-.face .pjaw,.face .pseam{translate:0 calc(var(--open,0) * 8.5%)}
+.face .pmouth{position:absolute;left:calc((var(--mx) - var(--mw) * .42) * 1%);width:calc(var(--mw) * .84%);top:calc((var(--my) - .6) * 1%);height:calc((.6 + var(--open,0) * 5.2) * 1%);opacity:min(1,calc(var(--open,0) * 5));border-radius:35% 35% 50% 50% / 25% 25% 75% 75%;background:radial-gradient(ellipse at 50% 100%,#a8474b 0 25%,#4a1414 55%,#1e0707 85%)}
+.face .pjaw,.face .pseam{translate:0 calc(var(--open,0) * 4.6%)}
 .face .pseam{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .face .ring{position:absolute;inset:4px;border-radius:50%;border:5px solid var(--c);opacity:0;pointer-events:none;z-index:-2}
 .voiced .face .ring{opacity:calc(var(--amp,0) * .85);transform:scale(calc(1.02 + var(--amp,0) * .16))}
@@ -313,11 +313,7 @@ header p{margin:0;max-width:66ch;color:var(--mat-muted)}
 .wipe .strip{position:absolute;top:-30px;width:14px;height:24px;background:var(--sc);opacity:0}
 .wipe.go .strip{animation:stripFall 1.5s ease-in var(--sd,.4s) both}
 @keyframes stripFall{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:1;transform:translateY(780px) rotate(540deg)}}
-/* stop-motion grain flicker over the whole stage */
-.stage::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:7;background:rgba(255,240,210,.05);opacity:0}
-.playing.stage::before{animation:flick .25s steps(2) infinite}
-@keyframes flick{0%{opacity:0}100%{opacity:1}}
-@media (prefers-reduced-motion:reduce){.doodles{display:none}.wipe .strip{display:none}.beat,.beat.out,.board,.board.jolt,.wipe.go,.wipe.go *,.caption .w.on,.caption .paper.flip,.presenter.enter *,.playing.stage::before{animation:none!important}.beat.out{opacity:0}}
+@media (prefers-reduced-motion:reduce){.doodles{display:none}.wipe .strip{display:none}.beat,.beat.out,.board,.board.jolt,.wipe.go,.wipe.go *,.caption .w.on,.caption .paper.flip,.presenter.enter *{animation:none!important}.beat.out{opacity:0}}
 
 /* controls */
 .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
@@ -396,7 +392,7 @@ header p{margin:0;max-width:66ch;color:var(--mat-muted)}
         <div class="doodles" id="doodles" aria-hidden="true"></div>
         <div class="presenter" id="presenter">
           <label class="face" id="face" for="faceInput" tabindex="0" style="--c:var(--blue)" aria-label="Add a face photo for this presenter">
-            <span class="ring" aria-hidden="true"></span><span class="ring r2" aria-hidden="true"></span><div class="pup" id="pup" hidden><img id="faceImg" alt=""><i class="pmouth"></i><img id="faceJaw" class="pjaw" alt=""><svg class="pseam" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path id="seam" fill="none" stroke="#3b2a17" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" stroke-opacity=".75"/></svg></div>
+            <span class="ring" aria-hidden="true"></span><span class="ring r2" aria-hidden="true"></span><div class="pup" id="pup" hidden><img id="faceImg" alt=""><i class="pmouth"></i><img id="faceJaw" class="pjaw" alt=""><svg class="pseam" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path id="seam" fill="none" stroke="#3b2a17" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-opacity=".55"/></svg></div>
             <span class="initials" id="initials">MH</span>
             <span class="hint" id="faceHint">tap to add face</span>
           </label>
@@ -810,6 +806,18 @@ SC.forEach((_,k)=>timeEven(k));
 
 /* ---------- voice recordings ---------- */
 const ENV=[null,null,null,null,null];   // loudness, FR frames a second, 0..1
+const MOU=[null,null,null,null,null];   // how open the mouth is, 0..1, one value per frame
+// Mouth curve: every syllable is a loudness peak. Each peak opens the jaw a little before it
+// (mouths open before the sound comes out) and lets it close again before the next syllable.
+function mouthCurve(env){const n=env.length,o=new Float32Array(n);
+  for(let i=0;i<n;i++){const e=env[i];if(e<.16)continue;let pk=true,lo=e;
+    for(let j=Math.max(0,i-4);j<=Math.min(n-1,i+4);j++){if(env[j]>e||(env[j]===e&&j<i)){pk=false;break}}
+    if(!pk)continue;for(let j=Math.max(0,i-9);j<=Math.min(n-1,i+9);j++)if(env[j]<lo)lo=env[j];
+    if(e-lo<.07)continue;
+    const h=.4+.6*Math.min(1,e/.85);
+    for(let d=-3;d<=7;d++){const j=i+d;if(j<0||j>=n)continue;const v=d<=0?h*(1-(-d)/3.5):h*Math.pow(1-d/7.5,1.3);if(v>o[j])o[j]=v}}
+  for(let i=0;i<n;i++){const g=Math.min(1,Math.max(0,(env[i]-.12)/.3));o[i]=Math.max(o[i],.18*g)}
+  return o}
 const VOICE=[null,null,null,null,null]; // <audio> per part
 // Fit sentence boundaries to the pauses in the recording. Dynamic programming over the silent gaps:
 // each sentence should last about (its words / all words) of the speech, and boundaries prefer long pauses.
@@ -846,7 +854,7 @@ async function analyse(k,ab){
   const ac=new AC();let buf;try{buf=await new Promise((ok,no)=>{const p=ac.decodeAudioData(ab,ok,no);if(p&&p.then)p.then(ok,no)})}finally{try{ac.close()}catch(e){}}
   const ch=buf.getChannelData(0),hop=Math.round(buf.sampleRate/FR),n=Math.floor(ch.length/hop),env=new Float32Array(n);
   for(let i=0;i<n;i++){let s=0;const o=i*hop;for(let j=0;j<hop;j++){const v=ch[o+j];s+=v*v}env[i]=Math.sqrt(s/hop)}
-  const so=Float32Array.from(env).sort(),hi=so[Math.floor(n*.95)]||1,lo=so[Math.floor(n*.1)]||0;
+  const so=Float32Array.from(env).sort(),hi=so[Math.floor(n*.98)]||1,lo=so[Math.floor(n*.1)]||0;
   for(let i=0;i<n;i++)env[i]=Math.min(1,Math.max(0,(env[i]-lo)/((hi-lo)||1)));
   return env;
 }
@@ -897,7 +905,7 @@ function addVoice(k,blob){
   const a=new Audio();a.preload='auto';a.src=URL.createObjectURL(blob);VOICE[k]=a;ENV[k]=null;
   a.addEventListener('playing',()=>{a._starting=false});
   a.addEventListener('loadedmetadata',()=>{if(VOICE[k]!==a||!isFinite(a.duration)||a.duration<=0)return;DURS[k]=a.duration;timeEven(k);if(ENV[k])align(k);relabel();curSent=-1;update(true)});
-  blob.arrayBuffer().then(ab=>analyse(k,ab)).then(env=>{if(!env||VOICE[k]!==a)return;ENV[k]=env;align(k);curSent=-1;update(true)}).catch(()=>{});
+  blob.arrayBuffer().then(ab=>analyse(k,ab)).then(env=>{if(!env||VOICE[k]!==a)return;ENV[k]=env;MOU[k]=mouthCurve(env);align(k);curSent=-1;update(true)}).catch(()=>{});
 }
 const b64blob=(b64,type)=>{const bin=atob(b64),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return new Blob([u],{type})};
 $('face').addEventListener('click',()=>{faceTarget=Math.max(0,curScene)});
@@ -998,7 +1006,7 @@ function update(force){
   const env=ENV[si],voiced=!!(env&&VOICE[si]);stage.classList.toggle('voiced',voiced);
   $('rider').style.left=(t/D*100)+'%';$('rider').style.setProperty('--roll',(t*90%360).toFixed(1));
   if(voiced){const f=Math.floor(t*FR),amp=(playing&&!RM)?((env[f]||0)*.6+(env[f-1]||0)*.25+(env[f-2]||0)*.15):0;presenterEl.style.setProperty('--amp',amp.toFixed(3));
-    presenterEl.style.setProperty('--open',Math.min(1,Math.max(0,(amp-.1)/.5)).toFixed(3));presenterEl.style.setProperty('--tilt',(Math.sin(t*1.7)*2.5*amp+Math.sin(t*.6)*1.2).toFixed(2));
+    {const mo=MOU[si],g=Math.floor((t+.05)*FR);presenterEl.style.setProperty('--open',((playing&&!RM&&mo)?(mo[g]||0):0).toFixed(3))}presenterEl.style.setProperty('--tilt',(Math.sin(t*1.7)*2.5*amp+Math.sin(t*.6)*1.2).toFixed(2));
     waveBars.forEach((b,i)=>{b.style.height=(8+22*Math.min(1,amp*(.55+.45*Math.abs(Math.sin(t*7+i*1.9)))))+'px'})}
   else{presenterEl.style.removeProperty('--amp');presenterEl.style.removeProperty('--open');waveBars.forEach(b=>b.style.removeProperty('height'))}
   $('partClock').textContent=fmt(t);$('totalClock').textContent=fmt(T);$('cutFill').style.width=(t/D*100)+'%';
@@ -1032,7 +1040,7 @@ document.addEventListener('fullscreenchange',()=>setTimeout(fit,50));
 document.addEventListener('keydown',e=>{if(e.target.closest&&e.target.closest('button,input,label,textarea'))return;
   if(e.code==='Space'){e.preventDefault();togglePlay()}else if(e.key==='ArrowRight'){T+=5;update()}else if(e.key==='ArrowLeft'){T-=5;update()}});
 window.__mw={seek:(si,b)=>{const j=SC[si].sents.findIndex(s=>s.beat===b);T=STARTS[si]+SC[si].sents[j].start+.01;update(true)},beats:B.map(x=>x.length),voices:()=>VOICE,seekT:x=>{T=x;update(true)},
-  timing:()=>SC.map((sc,k)=>({dur:DURS[k],voice:!!VOICE[k],env:!!ENV[k],sents:sc.sents.map(s=>[+s.start.toFixed(2),+s.end.toFixed(2),s.text.slice(0,40)])}))};
+  mou:k=>MOU[k]&&Array.from(MOU[k]),env:k=>ENV[k]&&Array.from(ENV[k],v=>+v.toFixed(3)),timing:()=>SC.map((sc,k)=>({dur:DURS[k],voice:!!VOICE[k],env:!!ENV[k],sents:sc.sents.map(s=>[+s.start.toFixed(2),+s.end.toFixed(2),s.text.slice(0,40)])}))};
 // recordings that come with the page
 (MEDIA.voices||[]).forEach((v,k)=>{if(v&&v.b64){try{addVoice(k,b64blob(v.b64,v.type))}catch(e){}}});
 update(true);
