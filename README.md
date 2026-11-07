@@ -14,4 +14,4 @@ Group: Muhammad Haikal bin Abdullah, Anis Maisarah binti Mukhriz Izraf, Nureen A
 1. Open the page in Chrome or Edge on a computer and wait about 5 seconds so the voices finish loading.
 2. Press **Full screen**, then **Play** (or press the space bar).
 3. Record the screen with sound: Windows Snipping Tool (Record, with system audio on), Xbox Game Bar (Win + Alt + R) or OBS Studio.
-4. The whole video runs 8:58, then stops on the "Thank you" scene.
+4. The whole video runs about 9:10, including a 12 second credits roll, then stops on "Terima kasih!".
