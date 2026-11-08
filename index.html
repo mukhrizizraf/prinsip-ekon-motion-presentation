@@ -260,9 +260,9 @@ header p{margin:0;max-width:66ch;color:var(--mat-muted)}
 
 /* ---------- motion upgrade ---------- */
 /* scenes: swing in like a card dealt onto the table, then a slow camera push; old scene is flicked off to the left */
-.beat{animation:beatIn .75s cubic-bezier(.2,.85,.25,1.12) both,push 16s ease-out .75s both!important}
+.beat{animation:beatIn .75s cubic-bezier(.2,.85,.25,1.12) both,push 16s ease-out .75s forwards!important}
 @keyframes beatIn{from{opacity:0;translate:70px 26px;rotate:2.5deg;scale:1.08}to{opacity:1;translate:0 0;rotate:0deg;scale:1}}
-@keyframes push{from{scale:1}to{scale:1.035}}
+@keyframes push{from{scale:1;translate:0 0}to{scale:1.045;translate:var(--px,0px) var(--py,0px)}}
 .beat.out{animation:beatOut .42s cubic-bezier(.5,0,.75,0) forwards!important}
 @keyframes beatOut{to{translate:-150px -26px;rotate:-6deg;opacity:0}}
 /* handheld camera drift on the board, and a jolt when a sound effect lands */
@@ -314,6 +314,40 @@ header p{margin:0;max-width:66ch;color:var(--mat-muted)}
 .wipe.go .strip{animation:stripFall 1.5s ease-in var(--sd,.4s) both}
 @keyframes stripFall{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:1;transform:translateY(780px) rotate(540deg)}}
 @media (prefers-reduced-motion:reduce){.doodles{display:none}.wipe .strip{display:none}.beat,.beat.out,.board,.board.jolt,.wipe.go,.wipe.go *,.caption .w.on,.caption .paper.flip,.presenter.enter *{animation:none!important}.beat.out{opacity:0}}
+
+/* living charts: things keep moving after they land */
+.a-shine{animation:shine 3s ease-in-out infinite}
+@keyframes shine{0%{transform:translateX(-80px)}55%,100%{transform:translateX(var(--sw,700px))}}
+.a-march{animation:march 1.1s linear infinite}
+@keyframes march{to{stroke-dashoffset:-30}}
+.a-coindrop{animation:coindrop 2.6s cubic-bezier(.5,0,.8,.4) infinite;opacity:0}
+@keyframes coindrop{0%{transform:translateY(var(--cdy,-140px));opacity:0}10%{opacity:1}42%{transform:translateY(0)}48%{transform:translateY(-12px)}54%{transform:translateY(0);opacity:1}75%,100%{transform:translateY(0);opacity:0}}
+.a-breathe{animation:breathe 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}
+@keyframes breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.03)}}
+.a-rowin{animation:rowin .35s cubic-bezier(.2,.8,.3,1.2) both}
+@keyframes rowin{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+.a-drawer{animation:drawer 2.4s ease-in-out infinite}
+@keyframes drawer{0%,55%,100%{transform:translateY(0)}63%,86%{transform:translateY(16px)}}
+.a-notefly{animation:notefly 2.4s ease-in-out infinite;opacity:0}
+@keyframes notefly{0%,55%{opacity:0;transform:translate(0,0) rotate(0)}62%{opacity:1}88%{opacity:1;transform:translate(var(--nx,90px),var(--ny,-30px)) rotate(var(--nr,20deg))}100%{opacity:0;transform:translate(var(--nx,90px),var(--ny,-30px)) rotate(var(--nr,20deg))}}
+.a-cheer{animation:cheer 2.4s ease-in-out infinite}
+@keyframes cheer{0%,80%,100%{transform:translateY(0)}88%{transform:translateY(-16px)}}
+.a-walkby{animation:walkby var(--wd,9s) linear infinite}
+@keyframes walkby{0%{transform:translateX(var(--wx0,-120px));opacity:0}8%,92%{opacity:1}100%{transform:translateX(var(--wx1,560px));opacity:0}}
+.a-bubble{animation:bubble 1.8s ease-in infinite;opacity:0}
+@keyframes bubble{0%{transform:translateY(0);opacity:0}20%{opacity:.9}100%{transform:translateY(-80px);opacity:0}}
+.a-heat{animation:heat 1.6s ease-in-out infinite;opacity:0}
+@keyframes heat{0%{transform:translateY(0) scaleX(1);opacity:0}40%{opacity:.7}100%{transform:translateY(-38px) scaleX(1.3);opacity:0}}
+.a-flag{animation:flag 1.1s ease-in-out infinite;transform-box:fill-box;transform-origin:0 50%}
+@keyframes flag{0%,100%{transform:skewY(0) scaleX(1)}50%{transform:skewY(-10deg) scaleX(.9)}}
+.a-slide{animation:slideplate 4s linear infinite;opacity:0}
+@keyframes slideplate{0%{transform:translateX(0);opacity:0}8%,86%{opacity:1}100%{transform:translateX(var(--sx,400px));opacity:0}}
+.a-stamp{animation:stamp .5s cubic-bezier(.3,.7,.4,1.5) both}
+@keyframes stamp{0%{transform:scale(3) rotate(-30deg);opacity:0}60%{transform:scale(.9) rotate(-14deg);opacity:1}100%{transform:scale(1) rotate(-12deg);opacity:1}}
+.stampbox{position:absolute;right:10px;top:8px;padding:4px 10px;border:4px solid var(--red);border-radius:6px;color:var(--red);font:700 17px/1 var(--f-tag);letter-spacing:.1em;background:rgba(251,248,241,.85)}
+.beat .hazard.a-tape{animation:tapein .8s cubic-bezier(.2,.8,.3,1.1) both,hazard 1.4s linear infinite}
+@keyframes hazard{to{background-position:73.54px 0}}
+@media (prefers-reduced-motion:reduce){.a-coindrop,.a-notefly,.a-bubble,.a-heat,.a-slide,.a-walkby{display:none}}
 
 /* end credits */
 .credits{position:absolute;inset:0;z-index:8;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,#2f2a24,#171411);color:#f4eee2;text-align:center}
@@ -554,6 +588,8 @@ const note=(x,y,c=C.green,w=92,h=46)=>`<g ${R}><rect x="${x}" y="${y}" width="${
 const awning=(x0,x1,y,n,cA=C.red,cB=C.white)=>{let s='';const w=(x1-x0)/n;for(let k=0;k<n;k++){const x=x0+k*w;s+=`<path d="M${x} ${y} h${w} v16 a${w/2} ${w/2*.8} 0 0 1 ${-w} 0 z" fill="${k%2?cB:cA}"/>`}return `<g ${R}>${s}</g>`};
 const steam=(x,y,n=3,col=C.ink)=>{let s='';for(let k=0;k<n;k++)s+=`<path class="a-steam fb" style="--dl:${k*.8}s" d="M${x+k*16} ${y} q-8 -12 0 -24 q8 -12 0 -24" stroke="${col}" stroke-opacity=".35" stroke-width="5" fill="none" stroke-linecap="round"/>`;return s};
 
+let UID=0;
+const coinP=(x,y,r=16)=>coin(x,y,r).split(R).join(""),noteP=(...a)=>note(...a).split(R).join("");
 function vbarsNotes(items,max,o={}){
   const W=o.w||700,H=o.h||330,top=o.top||56,base=H-64,n=items.length,slot=(W-20)/n,bw=Math.min(o.bw||96,slot*.6);
   let s='',tops=[];
@@ -562,6 +598,7 @@ function vbarsNotes(items,max,o={}){
     tops.push([cx,y]);
     let lines='';if(o.notes)for(let yy=y+16;yy<base-4;yy+=16)lines+=`<line x1="${cx-bw/2+8}" x2="${cx+bw/2-8}" y1="${yy}" y2="${yy}" stroke="#fbf8f1" stroke-opacity=".35" stroke-width="2"/>`;
     s+=`<g class="${d.v>=0?'gup':'gdown'}" style="--i:${k}"><rect x="${cx-bw/2}" y="${y}" width="${bw}" height="${h}" fill="${d.c}" ${R}/>${lines}</g>`;
+    if(d.v>=0)s+=`<g transform="translate(${cx} ${y-15})"><g class="a-coindrop" style="--dl:${2.2+k*.55}s;--cdy:-110px">${coinP(0,0,13)}</g></g>`;
     s+=`<g class="fade" style="--i:${k+2}">${cntT(cx,Math.min(y,base)-12,d.v,{dec:d.dec??0,pre:d.pre||'',suf:d.suf||'',from:d.from??0,delay:300+k*160,dur:1200})}</g>`;
     d.l.split('|').forEach((ln,j)=>{s+=`<text class="cl" x="${cx}" y="${base+30+j*22}" text-anchor="middle">${ln}</text>`});
   });
@@ -574,12 +611,15 @@ function hbars(items,max,o={}){
   items.forEach((d,k)=>{
     const y=12+k*rowH,w=d.v/max*trackW,ls=d.l.split('|');
     ls.forEach((ln,j)=>{s+=`<text class="cl" x="${labW-16}" y="${y+30+(j-(ls.length-1)/2)*21}" text-anchor="end">${ln}</text>`});
-    s+=`<rect class="gx" style="--i:${k}" x="${labW}" y="${y+4}" width="${w}" height="46" fill="${d.c}" ${R}/>`;
+    const id='hb'+(UID++);
+    s+=`<clipPath id="${id}"><rect x="${labW}" y="${y+4}" width="${w}" height="46"/></clipPath><rect class="gx" style="--i:${k}" x="${labW}" y="${y+4}" width="${w}" height="46" fill="${d.c}" ${R}/>`;
+    s+=`<g clip-path="url(#${id})"><path class="a-shine" style="--dl:${1.5+k*.4}s;--sw:${w+120}px" d="M${labW-40} ${y+54} l20 -56 h28 l-20 56 z" fill="#fff" opacity=".3"/></g>`;
+    s+=`<g opacity="0">${showAt(1700+k*350)}${motion(`M${labW+12} ${y-7} L${labW+w-12} ${y-7}`,2.8,1700+k*350,'indefinite','keyPoints="0;1;1" keyTimes="0;.7;1" calcMode="linear"')}<g class="a-spin fb" style="animation-duration:.8s">${coinP(0,0,10)}</g></g>`;
     s+=`<g class="fade" style="--i:${k+2}">${cntT(labW+w-12,y+37,d.v,{dec:3,delay:400+k*160},'cv t-light','end')}</g>`;
     if(d.warn) s+=`<g transform="translate(${labW+w+28} ${y+27})"><g class="a-blink" style="--dl:1.4s"><g ${R}><path d="M0 -22 L21 16 H-21 Z" fill="${C.yellow}"/></g><text x="0" y="12" text-anchor="middle" class="t-big" style="font-size:26px">!</text></g></g>`;
   });
   (o.refs||[]).forEach((r,k)=>{const x=labW+r.v/max*trackW;
-    s+=`<line class="fade" style="--i:${4+k}" x1="${x}" x2="${x}" y1="4" y2="${H-40}" stroke="${r.c||C.ink}" stroke-width="3" stroke-dasharray="8 7"/>`;
+    s+=`<g class="fade" style="--i:${4+k}"><line class="a-march" x1="${x}" x2="${x}" y1="4" y2="${H-40}" stroke="${r.c||C.ink}" stroke-width="3" stroke-dasharray="8 7"/></g>`;
     s+=`<text class="ax fade" style="--i:${4+k};fill:${r.c||C.ink}" x="${x}" y="${H-16}" text-anchor="middle">${r.t}</text>`});
   return sv(W,H,s);
 }
@@ -589,10 +629,13 @@ function sd(floor){
   s+=`<line class="draw" style="--i:0" x1="110" y1="60" x2="650" y2="370" stroke="${C.blue}" stroke-width="13" stroke-linecap="round" ${R}/>`;
   s+=`<line class="draw" style="--i:1" x1="110" y1="370" x2="650" y2="60" stroke="${C.orange}" stroke-width="13" stroke-linecap="round" ${R}/>`;
   s+=`<text class="t-big fade" style="--i:3" x="664" y="384">D</text><text class="t-big fade" style="--i:3" x="664" y="66">S</text>`;
-  s+=`<g class="fade" style="--i:4"><line x1="70" y1="215" x2="380" y2="215" stroke="${C.ink}" stroke-width="2.5" stroke-dasharray="7 7"/><line x1="380" y1="215" x2="380" y2="390" stroke="${C.ink}" stroke-width="2.5" stroke-dasharray="7 7"/><text class="cl" x="80" y="203" font-weight="700">Equilibrium wage</text></g>`;
+  s+=`<g class="fade" style="--i:4"><g class="a-march" style="--dl:2s"><line x1="70" y1="215" x2="380" y2="215" stroke="${C.ink}" stroke-width="2.5" stroke-dasharray="7 7"/><line x1="380" y1="215" x2="380" y2="390" stroke="${C.ink}" stroke-width="2.5" stroke-dasharray="7 7"/></g><text class="cl" x="80" y="203" font-weight="700">Equilibrium wage</text></g>`;
   if(!floor){
-    s+=`<circle r="13" fill="${C.blue}" opacity="0" ${R}>${showAt(1500)}${motion('M110 60 L380 215',1.6,1500,'1')}</circle>`;
-    s+=`<circle r="13" fill="${C.orange}" opacity="0" ${R}>${showAt(1500)}${motion('M110 370 L380 215',1.6,1500,'1')}</circle>`;
+    const KP='keyPoints="0;1;1" keyTimes="0;.62;1" calcMode="linear"';
+    s+=`<circle r="13" fill="${C.blue}" opacity="0" ${R}>${showAt(1500)}${motion('M110 60 L380 215',2.6,1500,'indefinite',KP)}</circle>`;
+    s+=`<circle r="13" fill="${C.orange}" opacity="0" ${R}>${showAt(1500)}${motion('M110 370 L380 215',2.6,1500,'indefinite',KP)}</circle>`;
+    s+=`<circle r="13" fill="${C.blue}" opacity="0" ${R}>${showAt(2800)}${motion('M650 370 L380 215',2.6,2800,'indefinite',KP)}</circle>`;
+    s+=`<circle r="13" fill="${C.orange}" opacity="0" ${R}>${showAt(2800)}${motion('M650 60 L380 215',2.6,2800,'indefinite',KP)}</circle>`;
     s+=`<circle cx="380" cy="215" r="22" fill="none" stroke="${C.ink}" stroke-width="4" class="a-ring fb" style="--dl:3.2s"/>`;
     s+=`<circle cx="380" cy="215" r="10" fill="${C.ink}"/>`;
   } else {
@@ -600,15 +643,17 @@ function sd(floor){
     s+=`<g style="transform:translateY(0)" class="drop" ><line x1="70" y1="130" x2="690" y2="130" stroke="${C.red}" stroke-width="12" stroke-linecap="round" ${R}/></g>`;
     s+=`<text class="cl fade" style="--i:3" x="685" y="162" text-anchor="end" font-weight="700" fill="${C.red}">Minimum wage</text>`;
     s+=`<g class="fade" style="--i:5"><circle cx="232" cy="130" r="9" fill="${C.ink}"/><circle cx="528" cy="130" r="9" fill="${C.ink}"/><path d="M232 74 V64 H528 V74" fill="none" stroke="${C.ink}" stroke-width="3"/><text class="cv" x="380" y="52" text-anchor="middle" style="font-size:23px">Surplus = unemployment</text></g>`;
+    [0,1,2].forEach(k=>{s+=`<g transform="translate(0 124)"><g class="a-walkby" style="--dl:${2.4+k*1.3}s;--wd:3.9s;--wx0:90px;--wx1:290px"><g style="animation:bob .4s ease-in-out infinite">${fig(C.grey,.4)}</g></g></g>`});
     [300,355,410,465].forEach((x,k)=>{s+=`<g transform="translate(${x} 124)"><g class="a-pop" style="--dl:${1.6+k*.25}s"><g class="a-bob" style="--dl:${k*.3}s">${fig([C.purple,C.green,C.blue,C.brown][k],.42)}</g></g></g>`});
   }
   return sv(720,440,s);
 }
-function receipt(title,rows,total,cls='',style=''){
-  return `<div class="paper receipt ${cls}" style="--c:${C.white};${style}"><div class="rh">${title}</div>${rows.map(x=>`<div class="rr num"><span>${x[0]}</span><span>${x[1]}</span></div>`).join('')}<div class="rt num"><span>Total</span><span>${total}</span></div></div>`;
+function receipt(title,rows,total,cls='',style='',o={}){const rd=o.rd??0,st=o.st??.12;
+  return `<div class="paper receipt ${cls}" style="--c:${C.white};${style}"><div class="rh">${title}</div>${rows.map((x,i)=>`<div class="rr num a-rowin" style="--dl:${(rd+i*st).toFixed(2)}s"><span>${x[0]}</span><span>${x[1]}</span></div>`).join('')}<div class="rt num a-rowin" style="--dl:${(rd+rows.length*st+.1).toFixed(2)}s"><span>Total</span><span>${total}</span></div>${o.stamp?`<div class="stampbox a-stamp" style="--dl:${(rd+rows.length*st+.5).toFixed(2)}s">${o.stamp}</div>`:''}</div>`;
 }
-function register(to,from){
-  return sv(330,150,`<g ${R}><path d="M20 40 H310 L296 146 H34 Z" fill="${C.blue}"/><rect x="60" y="6" width="210" height="46" fill="${C.ink}"/></g>
+function register(to,from,o={}){
+  const wk=o.worker?`<g transform="translate(388 150)"><g class="a-cheer" style="--dl:2.6s">${fig(C.orange,.95)}</g></g>${[0,1,2].map(k=>`<g transform="translate(250 126)"><g class="a-notefly" style="--dl:${(2.6+k*.12).toFixed(2)}s;--nx:${104+k*8}px;--ny:${-40-k*10}px;--nr:${14+k*12}deg">${noteP(0,0,[C.green,C.blue,C.red][k],40,20)}</g></g>`).join('')}`:'';
+  return sv(o.worker?440:330,150,`<g class="a-drawer" style="--dl:2.6s"><rect x="62" y="126" width="206" height="22" fill="#284f82"/><circle cx="165" cy="138" r="4" fill="${C.yellow}"/></g>${wk}${[0,1,2].map(k=>`<g transform="translate(${128+k*37} -6)"><g class="a-coindrop" style="--dl:${(2+k*.6).toFixed(1)}s;--cdy:-70px">${coinP(0,0,10)}</g></g>`).join('')}<g ${R}><path d="M20 40 H310 L296 146 H34 Z" fill="${C.blue}"/><rect x="60" y="6" width="210" height="46" fill="${C.ink}"/></g>
    ${cntT(165,40,to,{from,dec:2,pre:'RM',delay:900,dur:1800},'t-big t-light')}
    ${[0,1,2,3].map(r=>[0,1,2,3,4].map(c=>`<rect x="${70+c*40}" y="${70+r*17}" width="30" height="11" rx="2" fill="#fbf8f1" opacity=".75"/>`).join('')).join('')}`);
 }
@@ -622,7 +667,8 @@ function stall(){
    <g ${R}><path d="M300 204 h40 l-5 30 h-30 z" fill="#fbf8f1" stroke="${C.ink}" stroke-width="3"/></g>
    <rect class="a-pour" x="316" y="150" width="7" height="54" fill="#b07a3c" style="transform-origin:319px 150px"/>
    <g class="a-jug" style="transform-origin:320px 132px"><g ${R}><path d="M302 100 h36 l-4 40 h-28 z" fill="${C.purple}"/><path d="M338 110 q18 8 0 22" stroke="${C.purple}" stroke-width="6" fill="none"/></g></g>
-   <g class="a-sway" style="transform-origin:215px 108px">${awning(50,380,108,8)}</g>`);
+   <g class="a-sway" style="transform-origin:215px 108px">${awning(50,380,108,8)}</g>
+   ${[[C.green,0],[C.purple,-4.5],[C.yellow,-2.2]].map(([c,d],k)=>`<g transform="translate(0 ${336+k*4})"><g class="a-walkby" style="--dl:${d}s;--wd:${8+k*1.5}s;--wx0:${k%2?460:-40}px;--wx1:${k%2?-40:460}px"><g style="animation:bob .45s ease-in-out infinite">${fig(c,.5+k*.04)}</g></g></g>`).join('')}`);
 }
 
 /* ---------- beats ---------- */
@@ -635,7 +681,7 @@ const B=[
  ()=>{const v=vbarsNotes([{l:'2013',v:900,c:C.blue},{l:'2016',v:1000,c:C.green},{l:'2019',v:1100,c:C.orange},{l:'2020|(cities)',v:1200,c:C.purple},{l:'2022',v:1500,c:C.red},{l:'2025',v:1700,c:C.blue}],1800,{w:780,h:390,top:70,notes:true,bw:78});
    let p=`M${v.tops[0][0]} ${v.tops[0][1]-20}`;for(let k=1;k<v.tops.length;k++){const a=v.tops[k-1],b=v.tops[k];p+=` Q${(a[0]+b[0])/2} ${Math.min(a[1],b[1])-90} ${b[0]} ${b[1]-20}`}
    return beat(`<div class="row" style="gap:16px;align-items:baseline">${lab('Minimum wage, Peninsular Malaysia (RM a month)')}<div class="mid fade" style="--i:1">RM${cnt(1700,{from:900,delay:700,dur:3600})}</div></div>
-   ${sv(v.W,v.H,v.svg+`<g opacity="0">${showAt(1700)}${motion(p,4.4,1700)}<g transform="translate(0 -4)">${coin(0,0,18)}</g></g>`)}`)},
+   ${sv(v.W,v.H,v.svg+`<g opacity="0">${showAt(1700)}${motion(p,4.4,1700)}<g transform="translate(0 -4)">${coinP(0,0,18)}</g></g>`)}`)},
  ()=>beat(`<div class="row" style="gap:40px;align-items:center">
    <div class="col" style="align-items:center;gap:0">${sv(320,250,`${[0,1,2].map(k=>`<g class="a-fall" style="--dl:${k*.9}s;transform-box:fill-box">${note(100+k*28,40,[C.green,C.blue,C.red][k])}</g>`).join('')}<g ${R}><rect x="50" y="118" width="220" height="124" rx="14" fill="${C.brown}"/><rect x="214" y="156" width="70" height="48" rx="10" fill="#6d4426"/><circle cx="246" cy="180" r="8" fill="${C.yellow}"/></g><text x="150" y="196" text-anchor="middle" class="t-big t-light">WALLET</text>`)}
      ${ap(C.red,-4,'a-slam',1,`<div class="label">2013 to 2025</div><div class="huge num">+RM${cnt(800,{delay:1100,dur:1200})}</div><div class="mid num">${cnt(88.889,{dec:3,suf:'%',delay:1100,dur:1200})}</div>`,'','padding:18px 30px;margin-top:-30px')}</div>
@@ -651,7 +697,7 @@ const B=[
      ${pp(C.purple,2,3,`<div class="mid">Proposal by MTUC</div>`,'w300')}</div></div>`),
  ()=>beat(`${sv(640,250,`<g ${R}><path d="M320 238 L290 180 H350 Z" fill="${C.brown}"/></g>
    <g class="a-tilt" style="transform-origin:320px 176px"><g ${R}><rect x="40" y="168" width="560" height="14" fill="${C.ink}"/></g>
-     ${person(120,168,C.blue,.85)}${coin(150,58,15)}${coin(170,40,13)}<text x="120" y="22" text-anchor="middle" class="t-lab">Worker: higher pay</text>
+     ${person(120,168,C.blue,.85)}${coin(150,58,15)}${coin(170,40,13)}${[0,1].map(k=>`<g transform="translate(${86+k*22} 70)"><g class="a-coindrop" style="--dl:${1.6+k*1.1}s;--cdy:-90px">${coinP(0,0,12)}</g></g>`).join('')}<text x="120" y="22" text-anchor="middle" class="t-lab">Worker: higher pay</text>
      ${person(510,168,C.red,.85)}<path class="a-drip" d="M532 78 q6 9 0 13 q-6 -4 0 -13 Z" fill="#7fc6f0"/><path class="a-drip" style="--dl:.6s" d="M488 84 q5 8 0 11 q-5 -3 0 -11 Z" fill="#7fc6f0"/><g ${R}><rect x="540" y="112" width="58" height="56" fill="${C.brown}"/></g><text x="569" y="146" text-anchor="middle" class="t-tag t-light">COST</text><text x="520" y="22" text-anchor="middle" class="t-lab">Owner: higher cost</text></g>`)}
    <div class="row" style="max-width:860px;gap:14px">${['Raise prices','Cut workers','Cut hours','Use machines','Accept lower profit'].map((t,k)=>ap(C.yellow,[-3,2,-1,3,-2][k],'a-pop',1+k*.35,`<div class="txt" style="font-weight:700">${t}</div>`)).join('')}</div>`),
  ()=>beat(`${lab('Why restaurants? Food and beverage services, 2022')}<div class="row" style="gap:28px">
@@ -693,6 +739,7 @@ const B=[
       <g class="a-pop" style="--dl:.5s;transform-box:fill-box;transform-origin:50% 100%"><g ${R}><path d="M70 196 Q110 130 150 196 Z" fill="#fbf8f1" stroke="${C.ink}" stroke-width="2"/></g></g>
       <g class="a-pop" style="--dl:1.1s;transform-box:fill-box;transform-origin:50% 100%"><g ${R}><ellipse cx="190" cy="180" rx="34" ry="18" fill="${C.orange}"/><rect x="214" y="172" width="34" height="10" fill="#fbf8f1"/></g></g>
       <g class="a-pop" style="--dl:1.7s;transform-box:fill-box;transform-origin:50% 100%">${coin(120,150,20)}<text x="120" y="118" text-anchor="middle" class="t-tag">WAGES</text></g>
+      <g transform="translate(232 168)"><g class="a-coindrop" style="--dl:2.6s;--cdy:-120px"><g ${R}><ellipse rx="16" ry="9" fill="${C.orange}"/></g></g></g><g transform="translate(96 186)"><g class="a-coindrop" style="--dl:3.9s;--cdy:-130px"><g ${R}><path d="M-14 0 Q0 -10 14 0 Q0 6 -14 0Z" fill="${C.red}"/></g></g></g>
       <g transform="translate(290 120)"><g class="a-up" style="--dl:2.2s"><g ${R}><path d="M0 -40 L24 -6 H10 V30 H-10 V-6 H-24 Z" fill="${C.red}"/></g></g></g>`)}
      ${pp(C.orange,2,2,`<div class="label">Variable cost</div><div class="small">Rice, chicken, wages. Changes with output.</div>`,'w300')}</div></div>
    ${ap(C.yellow,-1,'a-pop',2.6,`<div class="txt"><b>Cost per plate goes up.</b> Same price means smaller profit.</div>`)}`),
@@ -723,13 +770,13 @@ const B=[
    {l:'All employees',v:.578,c:C.blue},{l:'Accommodation|and F&amp;B',v:.845,c:C.orange},{l:'Elementary jobs',v:.967,c:C.red}],1.2,{refs:[{v:.4,t:'0.400 RULE OF THUMB',c:C.green},{v:1,t:'1.000 = MEDIAN'}]})}
    ${ap(C.white,-1,'a-pop',2,`<div class="txt">Restaurant pay is already <b>very close</b> to the minimum.</div>`)}`),
  ()=>beat(`${lab('One local worker, cost per month')}<div class="row" style="gap:24px;align-items:flex-end;flex-wrap:nowrap">
-   ${pp(C.white,-3,0,receipt('Before · RM1,500',[['Basic wage','1,500.00'],['EPF 13%','195.00'],['SOCSO 1.75%','26.25']],'RM1,721.25'),'dim','padding:0')}
-   <div class="col" style="align-items:center;gap:0"><div class="a-print" style="animation:print 1.6s ease-out both;animation-delay:calc(.4s + var(--d0,0s))">${receipt('After · RM1,700',[['Basic wage','1,700.00'],['EPF 13%','221.00'],['SOCSO 1.75%','29.75']],'RM1,950.75')}</div>${register(1950.75,1721.25)}</div>
+   ${pp(C.white,-3,0,receipt('Before · RM1,500',[['Basic wage','1,500.00'],['EPF 13%','195.00'],['SOCSO 1.75%','26.25']],'RM1,721.25','','',{rd:.2}),'dim','padding:0')}
+   <div class="col" style="align-items:center;gap:0"><div class="a-print" style="animation:print 1.6s ease-out both;animation-delay:calc(.4s + var(--d0,0s))">${receipt('After · RM1,700',[['Basic wage','1,700.00'],['EPF 13%','221.00'],['SOCSO 1.75%','29.75']],'RM1,950.75','','',{rd:.8,st:.35,stamp:'NEW RATE'})}</div>${register(1950.75,1721.25,{worker:true})}</div>
    ${ap(C.red,-7,'a-slam',2.4,`<div class="mid num">+RM229.50</div><div class="txt num">+13.333%</div>`,'','padding:16px 24px;align-self:center')}</div>
    <style>@keyframes print{from{clip-path:inset(100% 0 0 0);transform:translateY(60px)}to{clip-path:inset(0 0 0 0);transform:translateY(0)}}</style>`),
  ()=>beat(`${lab('One foreign worker, cost per month')}<div class="row" style="gap:18px;align-items:flex-end;flex-wrap:nowrap">
-   ${pp(C.white,-3,0,receipt('Before · RM1,500',[['Basic wage','1,500.00'],['EPF','0.00'],['SOCSO 1.25%','18.75']],'RM1,518.75'),'dim','padding:0')}
-   <div class="col" style="align-items:center;gap:0"><div style="animation:print 1.6s ease-out both;animation-delay:calc(.4s + var(--d0,0s))">${receipt('After · RM1,700',[['Basic wage','1,700.00'],['EPF 2% (new)','34.00'],['SOCSO 1.25%','21.25']],'RM1,755.25')}</div>${register(1755.25,1518.75)}</div>
+   ${pp(C.white,-3,0,receipt('Before · RM1,500',[['Basic wage','1,500.00'],['EPF','0.00'],['SOCSO 1.25%','18.75']],'RM1,518.75','','',{rd:.2}),'dim','padding:0')}
+   <div class="col" style="align-items:center;gap:0"><div style="animation:print 1.6s ease-out both;animation-delay:calc(.4s + var(--d0,0s))">${receipt('After · RM1,700',[['Basic wage','1,700.00'],['EPF 2% (new)','34.00'],['SOCSO 1.25%','21.25']],'RM1,755.25','','',{rd:.8,st:.35,stamp:'EPF 2%'})}</div>${register(1755.25,1518.75,{worker:true})}</div>
    <div class="col" style="gap:16px;align-self:center">${ap(C.red,-7,'a-slam',2.4,`<div class="mid num">+RM236.50</div><div class="txt num">+15.572%</div>`,'','padding:16px 24px')}${ap(C.yellow,5,'a-slam',3,`<div class="label">New from Oct 2025</div><div class="small"><b>EPF 2%</b> for foreign workers</div>`,'w200')}</div></div>
    <style>@keyframes print{from{clip-path:inset(100% 0 0 0);transform:translateY(60px)}to{clip-path:inset(0 0 0 0);transform:translateY(0)}}</style>`),
  ()=>beat(`${pp(C.white,-1.5,0,`<div class="label">Hypothetical example</div><div class="mid">A small restaurant, eight workers</div>`,'tape','padding:14px 26px')}
@@ -738,14 +785,16 @@ const B=[
    ${[90,170,250].map((x,k)=>`<g transform="translate(${x} 262)"><g class="a-walk" style="--dl:${.2+k*.25}s"><g class="a-step" style="--dl:${.2+k*.25}s">${fig(C.blue,.9)}</g></g></g>`).join('')}
    ${[380,460,540,620].map((x,k)=>`<g transform="translate(${x} 262)"><g class="a-walk" style="--dl:${1+k*.25}s"><g class="a-step" style="--dl:${1+k*.25}s">${fig(C.orange,.9)}</g></g></g>`).join('')}
    <g transform="translate(790 262)"><g class="a-walk" style="--dl:2s">${fig(C.green,.9)}<g class="a-toss" style="transform-origin:30px -60px"><g ${R}><path d="M20 -62 A36 16 0 0 0 92 -62 Z" fill="${C.ink}"/><rect x="0" y="-66" width="24" height="7" fill="${C.brown}"/></g></g></g></g>
+   ${[0,1].map(k=>`<g transform="translate(790 196)"><g class="a-slide" style="--dl:${3+k*2}s;--sx:-720px"><g ${R}><ellipse cx="0" cy="0" rx="26" ry="7" fill="${C.white}"/><path d="M-14 -2 Q0 -22 14 -2 Z" fill="${[C.yellow,C.red][k]}"/></g></g></g>`).join('')}${steam(838,170,3)}
    <g class="fade" style="--i:14"><text x="170" y="304" text-anchor="middle" class="t-lab">3 local · RM1,700</text><text x="500" y="304" text-anchor="middle" class="t-lab">4 foreign · RM1,700</text><text x="800" y="304" text-anchor="middle" class="t-lab">1 cook · RM2,500</text></g>`)}`),
  ()=>beat(`${lab('Hypothetical restaurant, total labour cost a month')}<div class="row" style="gap:30px;align-items:center">
    <div class="col" style="align-items:center;gap:0">${sv(330,120,`${[0,1,2,3].map(k=>`<g class="a-flyup" style="--dl:${1+k*.5}s;--fx:${[-60,30,-20,70][k]}px;--fr:${[-30,25,10,-15][k]}deg;transform-box:fill-box">${note(130,70,[C.green,C.blue,C.red,C.purple][k],70,36)}</g>`).join('')}`)}
      ${sv(360,170,`<g ${R}><path d="M20 40 H340 L326 160 H34 Z" fill="${C.blue}"/><rect x="40" y="2" width="280" height="56" fill="${C.ink}"/></g>${cntT(180,42,15742,{from:14107.5,dec:2,pre:'RM',delay:600,dur:2600},'t-huge t-light')}<g class="a-slidein" style="--dl:.6s"><g ${R}><rect x="60" y="120" width="240" height="40" fill="#284f82"/></g></g><text x="180" y="100" text-anchor="middle" class="t-tag t-light">FROM RM14,107.50</text>`)}</div>
    <div class="col" style="gap:12px">${[['+RM',1634.5,2,' a month'],['+RM',19614,0,' a year'],['+',11.586,3,'% labour cost']].map((d,k)=>ap(C.yellow,[-2,1.5,-1][k],'a-slam',1.2+k*.5,`<div class="mid num">${cnt(d[1],{dec:d[2],pre:d[0],delay:1300+k*500,dur:1200})}</div><div class="small">${d[3].trim()}</div>`,'w250','padding:10px 20px')).join('')}</div></div>`),
  ()=>beat(`${lab('Effect on total cost')}<div class="row" style="gap:28px;align-items:center">
-   ${sv(320,300,`<g ${R}><path d="M150 160 L249.95 93.6 A120 120 0 1 1 150 40 Z" fill="${C.blue}"/></g><text x="120" y="190" text-anchor="middle" class="t-lab t-light">Other costs</text><text x="120" y="214" text-anchor="middle" class="t-tag t-light">rent, food, utilities</text>
+   ${sv(320,300,`<g class="a-wobble" style="transform-origin:150px 160px;--dl:1s"><g ${R}><path d="M150 160 L249.95 93.6 A120 120 0 1 1 150 40 Z" fill="${C.blue}"/></g><text x="120" y="190" text-anchor="middle" class="t-lab t-light">Other costs</text><text x="120" y="214" text-anchor="middle" class="t-tag t-light">rent, food, utilities</text>
      <g class="a-pulse" style="transform-origin:200px 90px;--dl:1s"><g style="transform:translate(14px,-18px)"><g ${R}><path d="M150 160 L150 40 A120 120 0 0 1 249.95 93.6 Z" fill="${C.orange}"/></g></g></g>
+     </g><g transform="translate(212 76)"><g class="a-coindrop" style="--dl:2s;--cdy:-90px">${coinP(0,0,11)}</g></g>
      <text x="250" y="24" text-anchor="middle" class="t-lab">Labour 15.657%</text>`)}
    <div class="col" style="gap:10px;align-items:center"><div class="row" style="gap:12px;flex-wrap:nowrap">${pp(C.orange,-2,0,`<div class="mid num">15.657%</div><div class="small">labour share</div>`,'w200')}<div class="op fade" style="--i:1">×</div>${pp(C.red,1.5,2,`<div class="mid num">11.586%</div><div class="small">rise in labour cost</div>`,'w200')}</div>
      <div class="op fade" style="--i:3">=</div>${ap(C.yellow,-2,'a-slam',1.4,`<div class="huge num">${cnt(1.814,{dec:3,suf:'%',delay:1500,dur:1400})}</div><div class="txt">rise in total cost</div>`,'','padding:14px 30px')}</div></div>`),
@@ -760,7 +809,7 @@ const B=[
  ()=>beat(`${lab('Before February 2025, owners warned')}<div class="col" style="gap:14px;width:820px">
    ${[[C.red,'One association','"Food prices could rise 20 to 30%!"'],[C.orange,'300 Johor mamak operators','"At least 5% more."'],[C.green,'Presma','"No excuse to raise prices."']].map((d,k)=>`<div class="row" style="gap:14px;justify-content:flex-start;flex-wrap:nowrap;${k===1?'padding-left:120px':k===2?'padding-left:240px':''}">${sv(100,100,`<g ${R}><circle cx="50" cy="50" r="44" fill="${d[0]}"/></g><circle cx="36" cy="40" r="5" fill="#fbf8f1"/><circle cx="64" cy="40" r="5" fill="#fbf8f1"/><ellipse class="a-talkm" style="--dl:${k*.2}s" cx="50" cy="68" rx="14" ry="9" fill="${C.ink}"/>`)}${ap(C.white,[-1.5,1,-1][k],'a-pop',.4+k*.6,`<div class="txt" style="text-align:left"><b>${d[1]}:</b> ${d[2]}</div>`,'bubble','padding:16px 28px')}</div>`).join('')}</div>`),
  ()=>beat(`${lab('Price rise in 2025 (year on year)')}<div class="row" style="gap:40px;align-items:flex-end">
-   ${sv(460,400,(()=>{let s='';const th=(x,v,c,l1,l2,k)=>{const top=40,bot=290,h=v/4*(bot-top);return `<g ${R}><rect x="${x-26}" y="${top-10}" width="52" height="${bot-top+20}" rx="26" fill="#fbf8f1"/><circle cx="${x}" cy="${bot+30}" r="42" fill="#fbf8f1"/><circle cx="${x}" cy="${bot+30}" r="32" fill="${c}"/></g><rect class="a-merc" style="--dl:${.5+k*.3}s" x="${x-14}" y="${bot-h}" width="28" height="${h+20}" fill="${c}"/>${cntT(x+50,bot-h+8,v,{dec:1,suf:'%',delay:600+k*300,dur:1800},'cv','start')}<text x="${x}" y="${bot+92}" text-anchor="middle" class="cl">${l1}</text>${l2?`<text x="${x}" y="${bot+112}" text-anchor="middle" class="cl">${l2}</text>`:''}`};
+   ${sv(460,400,(()=>{let s='';const th=(x,v,c,l1,l2,k)=>{const top=40,bot=290,h=v/4*(bot-top);return `<g ${R}><rect x="${x-26}" y="${top-10}" width="52" height="${bot-top+20}" rx="26" fill="#fbf8f1"/><circle cx="${x}" cy="${bot+30}" r="42" fill="#fbf8f1"/><circle cx="${x}" cy="${bot+30}" r="32" fill="${c}"/></g><g class="a-breathe" style="--dl:${2.4+k*.3}s"><rect class="a-merc" style="--dl:${.5+k*.3}s" x="${x-14}" y="${bot-h}" width="28" height="${h+20}" fill="${c}"/></g>${[0,1,2].map(j=>`<circle class="a-bubble" style="--dl:${(2+k*.4+j*.6).toFixed(1)}s" cx="${x-5+j*5}" cy="${bot+14}" r="${3+j%2}" fill="#fff"/>`).join('')}${k===0?[0,1,2].map(j=>`<path class="a-heat" style="--dl:${(2.2+j*.5).toFixed(1)}s" d="M${x-16+j*16} ${bot-h-14} q-6 -9 0 -18 q6 -9 0 -18" stroke="${C.red}" stroke-width="4" fill="none" stroke-linecap="round"/>`).join(''):''}${cntT(x+50,bot-h+8,v,{dec:1,suf:'%',delay:600+k*300,dur:1800},'cv','start')}<text x="${x}" y="${bot+92}" text-anchor="middle" class="cl">${l1}</text>${l2?`<text x="${x}" y="${bot+112}" text-anchor="middle" class="cl">${l2}</text>`:''}`};
      for(let t=0;t<=4;t++){const y=290-t/4*250;s+=`<text x="20" y="${y+6}" class="ax">${t}%</text><line x1="50" x2="400" y1="${y}" y2="${y}" stroke="${C.ink}" stroke-opacity=".15" stroke-width="2"/>`}
      return s+th(140,3.2,C.red,'Restaurant and','accommodation',0)+th(330,1.4,C.blue,'Overall','inflation',1)})(),'margin-bottom:-24px')}
    </div>`),
@@ -813,11 +862,12 @@ const B=[
    <div class="a-tape hazard" style="--dl:1.6s"><span>A sudden jump to RM3,100 is too risky for small restaurants</span></div>`),
  ()=>beat(`${lab('Our four recommendations')}<div class="row" style="gap:20px;align-items:center;flex-wrap:nowrap">
    ${sv(430,340,`${[0,1,2,3].map(k=>`<g ${R}><rect x="${60+k*88}" y="${310-62*(k+1)}" width="${88*(4-k)}" height="62" fill="${[C.blue,C.green,C.orange,C.purple][k]}"/></g><text x="${104+k*88}" y="${310-62*(k+1)+42}" text-anchor="middle" class="t-big t-light">${k+1}</text>`).join('')}<g ${R}><rect x="0" y="308" width="430" height="8" fill="${C.ink}"/></g>
-     <g opacity="0">${showAt(500)}${motion('M24 308 Q62 220 104 248 Q146 160 192 186 Q234 98 280 124 Q322 36 368 62',4,500,'1')}${fig(C.red,.5)}</g>`)}
+     <g opacity="0">${showAt(500)}${motion('M24 308 Q62 220 104 248 Q146 160 192 186 Q234 98 280 124 Q322 36 368 62',6,500,'indefinite','keyPoints="0;1;1" keyTimes="0;.7;1" calcMode="linear"')}${fig(C.red,.5)}</g>
+     <g transform="translate(396 14)"><rect x="0" y="0" width="5" height="60" fill="${C.ink}"/><g class="a-flag"><path d="M5 2 H40 L32 14 L40 26 H5 Z" fill="${C.red}"/></g></g>`)}
    <div class="col" style="gap:10px;width:470px">${['Raise it step by step, with a clear timetable','More time for micro businesses to adjust','Expand the Progressive Wage Policy (up to RM200 or RM300 per worker a month)','Grants or soft loans for technology'].map((t,k)=>ap(k%2?C.white:C.yellow,[-1.5,1,-1,1.5][k],'a-slidein',1.1+k*1,`<div class="txt" style="text-align:left"><b>${k+1}.</b> ${t}</div>`,'','padding:10px 18px')).join('')}</div></div>`),
  ()=>beat(`${sv(560,250,`<g ${R}><rect x="272" y="60" width="16" height="170" fill="${C.brown}"/><path d="M220 240 H340 L320 220 H240 Z" fill="${C.brown}"/></g>
    <g class="a-settle" style="transform-origin:280px 64px"><g ${R}><rect x="60" y="56" width="440" height="14" fill="${C.ink}"/></g>
-     <line x1="90" y1="70" x2="70" y2="140" stroke="${C.ink}" stroke-width="2"/><line x1="90" y1="70" x2="110" y2="140" stroke="${C.ink}" stroke-width="2"/><g ${R}><path d="M40 140 H140 Q130 170 90 170 Q50 170 40 140 Z" fill="${C.yellow}"/></g>${coin(78,124,13)}${coin(102,124,13)}<text x="90" y="200" text-anchor="middle" class="t-lab">Better pay</text>
+     <line x1="90" y1="70" x2="70" y2="140" stroke="${C.ink}" stroke-width="2"/><line x1="90" y1="70" x2="110" y2="140" stroke="${C.ink}" stroke-width="2"/><g ${R}><path d="M40 140 H140 Q130 170 90 170 Q50 170 40 140 Z" fill="${C.yellow}"/></g>${coin(78,124,13)}${coin(102,124,13)}<g transform="translate(90 112)"><g class="a-coindrop" style="--dl:3.4s;--cdy:-70px">${coinP(0,0,12)}</g></g><text x="90" y="200" text-anchor="middle" class="t-lab">Better pay</text>
      <line x1="470" y1="70" x2="450" y2="140" stroke="${C.ink}" stroke-width="2"/><line x1="470" y1="70" x2="490" y2="140" stroke="${C.ink}" stroke-width="2"/><g ${R}><path d="M420 140 H520 Q510 170 470 170 Q430 170 420 140 Z" fill="${C.yellow}"/><rect x="448" y="104" width="44" height="36" fill="${C.red}"/></g><text x="470" y="200" text-anchor="middle" class="t-lab">Restaurants survive</text></g>`)}
    <div class="row" style="gap:14px">${[['Labour cost went up',C.orange],['Eating out costs more',C.red],['No clear sign of big job losses',C.green]].map((d,k)=>ap(d[1],[-2,1.5,-1][k],'a-pop',1+k*.4,`<div class="txt" style="font-weight:700">${d[0]}</div>`,'w250','padding:12px 18px')).join('')}</div>
    ${ap(C.purple,1,'a-slam',2.8,`<div class="mid">Step by step works best</div>`)}`),
@@ -1013,6 +1063,7 @@ function showBeat(html,si,b){
   const old=[...board.querySelectorAll('.beat:not(.out)')];const d0=old.length?300:0;
   old.forEach(o=>{o.classList.add('out');setTimeout(()=>o.remove(),420)});
   board.insertAdjacentHTML('beforeend',html);const nb=board.lastElementChild;nb.style.setProperty('--d0',d0+'ms');
+  {const P=[[-16,-6],[14,-8],[-12,8],[16,6],[0,-10]][(si*3+b)%5];nb.style.setProperty('--px',P[0]+'px');nb.style.setProperty('--py',P[1]+'px')}
   if(!RM)nb.insertAdjacentHTML('beforeend',funLayer(si,b));
   activate(nb,d0);mascotSay(si,b);
   // camera jolt when the sound effect sticker slams in
