@@ -349,6 +349,10 @@ header p{margin:0;max-width:66ch;color:var(--mat-muted)}
 @keyframes hazard{to{background-position:73.54px 0}}
 @media (prefers-reduced-motion:reduce){.a-coindrop,.a-notefly,.a-bubble,.a-heat,.a-slide,.a-walkby{display:none}}
 
+/* opening montage */
+.intro{position:absolute;inset:0;z-index:9;background:#01030b}
+.intro canvas{display:block;width:1280px;height:720px}
+
 /* end credits */
 .credits{position:absolute;inset:0;z-index:8;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,#2f2a24,#171411);color:#f4eee2;text-align:center}
 .credits[hidden]{display:none}
@@ -424,7 +428,7 @@ header p{margin:0;max-width:66ch;color:var(--mat-muted)}
   <header>
     <div class="kicker">BEEBK1013 Principles of Economics · Assignment 2 video documentary draft</div>
     <h1>Minimum Wage on the Menu</h1>
-    <p>The paper cutout animatic of the five part video documentary: about 1 minute 48 seconds for each member, 9 minutes in total, inside the 7 to 10 minute limit. Every scene acts out the point being spoken. All five parts play each member's own voice with their photo.</p>
+    <p>The paper cutout animatic of the five part video documentary: about 1 minute 48 seconds for each member, 9 minutes in total, inside the 7 to 10 minute limit. It opens with a 15 second montage of the group and the research title. Every scene acts out the point being spoken. All five parts play each member's own voice with their photo.</p>
   </header>
 
 
@@ -461,6 +465,7 @@ header p{margin:0;max-width:66ch;color:var(--mat-muted)}
             <text x="75" y="150" text-anchor="middle" style="font-family:var(--f-tag);font-weight:700;font-size:11px;fill:#fbf8f1;letter-spacing:.08em">ABANG TEH</text>
           </g></svg></div>
         <div class="cutline"><span id="cutFill"></span><b class="rider" id="rider">RM</b></div>
+        <div class="intro" id="intro" aria-hidden="true"><canvas id="introCv" width="1280" height="720"></canvas></div>
         <div class="credits" id="credits" hidden aria-hidden="true"><div class="roll" id="credRoll">
           <div class="c-title">Minimum Wage on the Menu</div>
           <div class="c-sub">A mini documentary · BEEBK1013 Principles of Economics · Universiti Utara Malaysia · A261</div>
@@ -511,9 +516,10 @@ header p{margin:0;max-width:66ch;color:var(--mat-muted)}
 <script>
 (function(){
 // each part lasts 108 s by default; a part with a voice recording takes the recording's length
-const DUR0=108, PAUSE=1.6, FR=50, CRED=12; // CRED: end credits roll, in seconds, after part 5
-let DURS=[DUR0,DUR0,DUR0,DUR0,DUR0], STARTS=[0,108,216,324,432], TOTAL=DUR0*5+CRED;
-function relayout(){let a=0;STARTS=DURS.map(d=>{const s=a;a+=d;return s});TOTAL=a+CRED}
+const DUR0=108, PAUSE=1.6, FR=50, CRED=12, INTRO=15; // INTRO: opening montage, in seconds, before part 1
+let wasIntro=null; // CRED: end credits roll, in seconds, after part 5
+let DURS=[DUR0,DUR0,DUR0,DUR0,DUR0], STARTS=[15,123,231,339,447], TOTAL=INTRO+DUR0*5+CRED;
+function relayout(){let a=INTRO;STARTS=DURS.map(d=>{const s=a;a+=d;return s});TOTAL=a+CRED}
 const partOf=t=>{for(let j=0;j<4;j++)if(t<STARTS[j]+DURS[j])return j;return 4};
 const C={blue:'#3567a8',green:'#3f8a52',red:'#c9443a',orange:'#ee9b38',purple:'#6f52a0',yellow:'#f3d04a',white:'#fbf8f1',ink:'#22201c',brown:'#8a5a33',kraft:'#cfa877',grey:'#6f6a60',skin:'#e9c27f'};
 // mouth line in each face photo: centre x %, lip line y %, mouth width %
@@ -1078,6 +1084,9 @@ function wipe(si){const w=$('wipe'),m=MEMBERS[si];w.style.setProperty('--c',m.c)
 let T=0,playing=false,last=0,curScene=-1,curBeat=-1,curSent=-1,nowEl=null;
 function update(force){
   T=Math.max(0,Math.min(TOTAL-0.001,T));
+  const inIntro=T<INTRO;
+  if(inIntro!==wasIntro){$('intro').style.display=inIntro?'block':'none';if(!inIntro&&wasIntro!==null&&curScene===0){curBeat=-1;force=true;setPresenter(0)}wasIntro=inIntro}
+  if(inIntro)drawIntro(T);
   const si=partOf(T),tRaw=T-STARTS[si],D=DURS[si],t=Math.min(tRaw,D-.001),sc=SC[si];
   {const cp=(tRaw-D)/CRED,cr=$('credits');if(si===4&&cp>0){cr.hidden=false;cr.style.opacity=Math.min(1,cp*CRED/.7).toFixed(3);const ce=document.querySelector('.credits .c-end'),ec=ce.offsetTop+ce.offsetHeight/2,q=Math.min(1,cp),e=q<.8?q/.8*.9:.9+.1*(1-Math.pow(1-(q-.8)/.2,2));$('credRoll').style.transform=`translateY(${(720-e*(ec+360)).toFixed(1)}px)`}else cr.hidden=true}let k=sc.sents.findIndex(s=>t<s.end);if(k<0)k=sc.sents.length-1;const s=sc.sents[k];
   const sceneChanged=si!==curScene;
@@ -1100,20 +1109,198 @@ function update(force){
   $('partClock').textContent=fmt(Math.min(tRaw,D));$('totalClock').textContent=fmt(T);$('cutFill').style.width=(t/D*100)+'%';
   partBtns.forEach((b,j)=>{b.querySelector('.bar span').style.width=(j<si?100:j===si?t/D*100:0)+'%'});
 }
+/* ---------- 15 second opening montage ---------- */
+// Everything is drawn on one canvas as a function of time t (0..INTRO), so seeking, pausing and
+// screen recording always give the same frame. Inspired by the reference clips: a fluid blue
+// vortex, a dandelion orb of light with orbiting labels, a "mirror hall" of cards, then the title.
+const IC=$('introCv'),ix=IC.getContext('2d');
+const IW=1280,IH=720,ICX=640,ICY=330;
+const iClamp=x=>x<0?0:x>1?1:x;
+const iSeg=(t,a,b)=>iClamp((t-a)/(b-a));
+const iEase=x=>{x=iClamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2};
+const iOut=x=>{x=iClamp(x);return 1-Math.pow(1-x,3)};
+const iBack=x=>{x=iClamp(x);const c=1.70158,c3=c+1;return 1+c3*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+let iSeed=7;const iRnd=()=>(iSeed=(iSeed*16807)%2147483647)/2147483647;
+const NP=650;
+const IP=[...Array(NP)].map((_,i)=>({r:50+Math.pow(iRnd(),.75)*640,a:iRnd()*6.2832,sz:.6+iRnd()*1.9,warm:iRnd()>.86,
+  ph:Math.acos(1-2*(i+.5)/NP),th:i*2.39996,spike:i%5===0,dr:iRnd()*6.2832,ds:.3+iRnd()*.8}));
+const iSprite=(r,g,b)=>{const c=document.createElement('canvas');c.width=c.height=32;const x=c.getContext('2d');const gr=x.createRadialGradient(16,16,0,16,16,16);
+  gr.addColorStop(0,`rgba(${r},${g},${b},1)`);gr.addColorStop(.3,`rgba(${r},${g},${b},.5)`);gr.addColorStop(1,`rgba(${r},${g},${b},0)`);x.fillStyle=gr;x.fillRect(0,0,32,32);return c};
+const ISPR=[iSprite(160,220,255),iSprite(255,212,110)];
+const IBG=(()=>{const c=document.createElement("canvas");c.width=IW;c.height=IH;const x=c.getContext("2d");const g=x.createRadialGradient(ICX,ICY,40,ICX,ICY,860);g.addColorStop(0,"#0f3a86");g.addColorStop(.45,"#071a45");g.addColorStop(1,"#01030b");x.fillStyle=g;x.fillRect(0,0,IW,IH);return c})();
+const IVG=(()=>{const c=document.createElement("canvas");c.width=IW;c.height=IH;const x=c.getContext("2d");const g=x.createRadialGradient(ICX,ICY,300,ICX,ICY,820);g.addColorStop(0,"rgba(0,0,0,0)");g.addColorStop(1,"rgba(0,0,0,.45)");x.fillStyle=g;x.fillRect(0,0,IW,IH);return c})();
+const IFACE=faces.map(f=>{if(!f)return null;const im=new Image();im.src=f;return im});
+const ICARD=[];
+function iRound(x,y,w,h,r){ix.beginPath();ix.moveTo(x+r,y);ix.arcTo(x+w,y,x+w,y+h,r);ix.arcTo(x+w,y+h,x,y+h,r);ix.arcTo(x,y+h,x,y,r);ix.arcTo(x,y,x+w,y,r);ix.closePath()}
+function iCard(k){ // one cached bitmap per member card
+  if(ICARD[k])return ICARD[k];const im=IFACE[k];if(im&&!im.complete)return null;
+  const m=MEMBERS[k],W=220,H=300,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  const rr=(X,Y,w,h,r)=>{x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath()};
+  rr(0,0,W,H,18);x.fillStyle=m.c;x.fill();
+  x.save();rr(12,12,W-24,W-24,12);x.clip();if(im)x.drawImage(im,12,12,W-24,W-24);else{x.fillStyle='#22201c';x.fillRect(12,12,W-24,W-24)}x.restore();
+  x.fillStyle='#fbf8f1';x.font='26px "Lilita One"';x.textAlign='center';x.fillText(m.short,W/2,W+22);
+  x.font='700 12px "Courier Prime"';x.fillText(`PART ${k+1} · ${m.topic.toUpperCase()}`,W/2,W+46);
+  const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,'rgba(255,255,255,.28)');g.addColorStop(.4,'rgba(255,255,255,0)');rr(0,0,W,H,18);x.fillStyle=g;x.fill();
+  return ICARD[k]=c;
+}
+// letters rise in one by one
+function iType(str,x,y,font,color,p,o={}){
+  if(p<=0)return;ix.save();ix.font=font;ix.fillStyle=color;ix.textBaseline='alphabetic';
+  const sp=o.sp||0,chars=[...str],ws=chars.map(c=>ix.measureText(c).width+sp),tw=ws.reduce((a,b)=>a+b,0)-sp;
+  let cx=o.align==='left'?x:x-tw/2;const n=chars.length,span=o.span||5;
+  if(o.glow){ix.shadowColor=o.glow;ix.shadowBlur=o.blur||12}
+  chars.forEach((c,i)=>{const l=iClamp((p*(n+span)-i)/span);if(l>0){ix.globalAlpha=l*(o.a??1);ix.fillText(c,cx,y+(1-iOut(l))*(o.rise??34))}cx+=ws[i]});
+  ix.restore();
+}
+function iPill(txt,x,y,a){ix.save();ix.globalAlpha=a;ix.font='700 21px "Atkinson Hyperlegible"';const w=ix.measureText(txt).width+34;
+  iRound(x-w/2,y-19,w,38,19);ix.fillStyle='rgba(6,20,52,.82)';ix.fill();ix.lineWidth=2;ix.strokeStyle='rgba(140,210,255,.9)';ix.stroke();
+  ix.fillStyle='#eaf6ff';ix.textAlign='center';ix.textBaseline='middle';ix.fillText(txt,x,y+1);ix.restore()}
+function drawIntro(t){
+  const x=ix;x.setTransform(1,0,0,1,0,0);x.globalAlpha=1;x.globalCompositeOperation='source-over';
+  // camera shake on the big hit
+  const sh=Math.max(0,1-(t-11.8)/.5)*(t>=11.8?1:0);if(sh>0)x.translate(Math.sin(t*90)*9*sh,Math.cos(t*77)*7*sh);
+  // deep blue background
+  x.fillStyle='#01030b';x.fillRect(-20,-20,IW+40,IH+40);x.drawImage(IBG,0,0);
+  // fluid vortex bands
+  const vA=(1-iEase(iSeg(t,5.6,6.6)))*.9+iEase(iSeg(t,11.8,12.4))*.5;
+  if(vA>0.01){x.save();x.globalCompositeOperation='lighter';x.translate(ICX,ICY);
+    for(let k=0;k<5;k++){x.save();x.rotate(t*(.22+k*.05)*(k%2?1:-1)+k*.9);const rx=230+k*70,ry=(90+k*28)*(1+.15*Math.sin(t*1.3+k));
+      const g=x.createLinearGradient(-rx,0,rx,0);g.addColorStop(0,'rgba(60,150,255,0)');g.addColorStop(.5,`rgba(90,180,255,${.07*vA})`);g.addColorStop(1,'rgba(40,120,255,0)');
+      x.strokeStyle=g;x.lineWidth=46-k*4;x.beginPath();x.ellipse(0,0,rx,ry,0,0,6.2832);x.stroke();x.restore()}
+    x.restore()}
+  // particles: vortex -> orb -> burst into a starfield
+  const m=iEase(iSeg(t,3,4.4)),up=iEase(iSeg(t,5.8,6.7)),b=iOut(iSeg(t,11.8,13.2)),fadeIn=iEase(iSeg(t,0,1.2));
+  const back=iEase(iSeg(t,11.25,11.8)),u=up*(1-back);
+  const scx=ICX+u*(112-ICX),scy=ICY+u*(96-ICY),R=(150-u*112)*(1+.04*Math.sin(t*3));
+  x.save();x.globalCompositeOperation='lighter';
+  for(let i=0;i<NP;i++){const p=IP[i];
+    const ang=p.a+t*(.35+70/p.r)+Math.sin(p.r*.02+t)*.12,rr=p.r*(1-.3*iEase(iSeg(t,0,3)))+9*Math.sin(t*2+p.a);
+    const vx=ICX+Math.cos(ang)*rr,vy=ICY+Math.sin(ang)*rr*.56;
+    const th=p.th+t*.55,sp=p.spike?1.32:1,X3=Math.sin(p.ph)*Math.cos(th),Y3=Math.cos(p.ph),Z3=Math.sin(p.ph)*Math.sin(th);
+    const sx=scx+X3*R*sp,sy=scy+Y3*R*sp;
+    let px=vx+(sx-vx)*m,py=vy+(sy-vy)*m;
+    if(b>0){const dx=px-scx,dy=py-scy;px+=dx*b*3.2+Math.cos(p.dr)*b*120;py+=dy*b*3.2+Math.sin(p.dr)*b*120+ (t-11.8)*p.ds*14}
+    let al=fadeIn*(m>0?(.55+.45*((Z3+1)/2)*m+(1-m)*.45):.8);if(u>0)al*=1-u*.35;if(b>0)al*=1-b*.55;
+    const s=p.sz*(m>.5&&!b?(.8+.5*(Z3+1)/2):1)*7;x.globalAlpha=Math.min(1,al);x.drawImage(ISPR[p.warm?1:0],px-s/2,py-s/2,s,s)}
+  // glowing core
+  const core=(.35+.65*m)*(1-u*.4)*(1-b);if(core>0.01){const cg=x.createRadialGradient(scx,scy,0,scx,scy,R*1.3);cg.addColorStop(0,`rgba(200,240,255,${.55*core})`);cg.addColorStop(.35,`rgba(90,170,255,${.22*core})`);cg.addColorStop(1,'rgba(30,80,200,0)');x.globalAlpha=1;x.fillStyle=cg;x.beginPath();x.arc(scx,scy,R*1.3,0,6.2832);x.fill()}
+  x.restore();
+  // ---- scene A text ----
+  if(t<3.4){const o=1-iSeg(t,2.9,3.3);
+    iType('1 FEBRUARY 2025',ICX,250,'700 24px "Courier Prime"','#9fd4ff',iSeg(t,.3,1.2),{sp:6,a:o,rise:18});
+    const v=Math.round(1500+200*iEase(iSeg(t,1.3,2.5)));
+    iType('RM1,500  →  RM'+v.toLocaleString('en-US'),ICX,345,'86px "Lilita One"','#ffffff',iSeg(t,1,1.9),{a:o,glow:'rgba(120,200,255,.9)',blur:14});
+    iType('the new minimum wage',ICX,400,'italic 28px "Atkinson Hyperlegible"','#cfe9ff',iSeg(t,1.8,2.5),{a:o})}
+  // ---- scene B: orbiting labels around the orb ----
+  if(t>3.4&&t<6.4){const o=iSeg(t,3.5,4.1)*(1-iSeg(t,5.7,6.2));
+    iType('Who really pays when pay goes up?',ICX,110,'52px "Lilita One"','#ffffff',iSeg(t,3.6,4.6),{a:o,glow:'rgba(120,200,255,.8)'});
+    ['Labour costs','Menu prices','Jobs','Business decisions'].forEach((s,k)=>{const an=k*1.5708+t*.7,px=ICX+Math.cos(an)*300,py=ICY+Math.sin(an)*118;iPill(s,px,py,o*(.55+.45*(Math.sin(an)+1)/2))})}
+  // ---- scene C: mirror hall of the five presenters ----
+  if(t>5.9&&t<12.8){
+    const enter=iOut(iSeg(t,6,7)),ff=Math.max(0,Math.min(4,(t-6.7)/1.0)),fi=Math.floor(ff),fr=ff-fi,cam=fi+iEase(iSeg(fr,0,.35)),exit=iEase(iSeg(t,11.3,12.2));
+    const kick=iType;kick('PRESENTED BY',ICX,86,'700 20px "Courier Prime"','#9fd4ff',iSeg(t,6.2,6.9),{sp:8,a:1-exit,rise:14});
+    // glossy floor line
+    x.save();const fl=x.createLinearGradient(0,0,IW,0);fl.addColorStop(0,'rgba(120,200,255,0)');fl.addColorStop(.5,`rgba(150,215,255,${.5*(1-exit)*enter})`);fl.addColorStop(1,'rgba(120,200,255,0)');x.fillStyle=fl;x.fillRect(0,512,IW,2);x.restore();
+    const order=[0,1,2,3,4].sort((a,c)=>Math.abs(c-cam)-Math.abs(a-cam));
+    order.forEach(k=>{const card=iCard(k);if(!card)return;const d=k-cam,ad=Math.min(1.6,Math.abs(d));
+      let cxk=ICX+d*230+(1-enter)*(900+k*120),cyk=360,sc=(1-.2*ad)*(1+.06*Math.max(0,1-ad*2)),sk=-.07*Math.sign(d)*Math.min(1,ad);
+      const ring=k*1.2566+t*.9,ox=ICX+Math.cos(ring)*420,oy=ICY+Math.sin(ring)*150;cxk+= (ox-cxk)*exit;cyk+=(oy-cyk)*exit;sc*=1-exit*.65;
+      const al=Math.min(1,enter*1.2)*(1-iSeg(t,12.1,12.7))*(1-.45*Math.min(1,ad-.2>0?ad-.2:0));
+      const w=220*sc,h=300*sc;
+      x.save();x.globalAlpha=al;x.setTransform(1,sk,0,1,cxk,cyk);
+      if(ad<.5&&exit<.5){x.shadowColor=MEMBERS[k].c;x.shadowBlur=24*(1-ad*2)}
+      x.drawImage(card,-w/2,-h/2,w,h);x.shadowBlur=0;
+      // reflection on the floor
+      if(exit<.9){x.globalAlpha=al*.22*(1-exit);x.scale(1,-1);x.drawImage(card,-w/2,-1.5*h-4,w,h)}
+      x.restore()});
+    // fade the reflections into the floor
+    x.save();const ff2=x.createLinearGradient(0,514,0,720);ff2.addColorStop(0,'rgba(2,8,26,0)');ff2.addColorStop(.6,'rgba(2,8,26,.85)');ff2.addColorStop(1,'rgba(2,8,26,1)');x.fillStyle=ff2;x.globalAlpha=(1-exit);x.fillRect(0,514,IW,206);x.restore();
+    // name of the member in focus
+    if(t>6.8&&t<11.4){const k=Math.round(cam),local=(t-6.7)-k;const m=MEMBERS[Math.max(0,Math.min(4,k))];
+      iType(m.name,ICX,600,'34px "Lilita One"','#ffffff',iSeg(local,.05,.45),{a:1-iSeg(local,.85,1),glow:'rgba(120,200,255,.6)',blur:16,rise:20});
+      iType(m.topic.toUpperCase(),ICX,636,'700 16px "Courier Prime"','#9fd4ff',iSeg(local,.15,.5),{sp:5,a:1-iSeg(local,.85,1),rise:12})}
+  }
+  // ---- scene D: flash, title lockup, faces ----
+  if(t>11.75){const fl=Math.max(0,1-(t-11.8)/.45);if(fl>0){x.save();x.globalCompositeOperation='lighter';x.globalAlpha=fl*.85;x.fillStyle='#cfeaff';x.fillRect(-20,-20,IW+40,IH+40);x.restore()}
+    iType('MINIMUM WAGE',ICX,250,'108px "Lilita One"','#ffffff',iSeg(t,12,12.8),{sp:4,glow:'rgba(110,190,255,.95)',blur:16,rise:46});
+    iType('and its impact on',ICX,306,'italic 36px "Atkinson Hyperlegible"','#cfe9ff',iSeg(t,12.5,13.1),{rise:20});
+    iType('MALAYSIAN RESTAURANTS',ICX,390,'78px "Lilita One"','#f3d04a',iSeg(t,12.75,13.6),{sp:3,glow:'rgba(243,208,74,.7)',blur:12,rise:40});
+    iType('A MINI DOCUMENTARY · BEEBK1013 PRINCIPLES OF ECONOMICS · UUM',ICX,446,'700 17px "Courier Prime"','#9fd4ff',iSeg(t,13.3,14),{sp:3,rise:10});
+    for(let k=0;k<5;k++){const p=iBack(iSeg(t,13.3+k*.12,13.75+k*.12));if(p<=0)continue;const fx=ICX+(k-2)*118,fy=538,r=34*p;
+      x.save();x.beginPath();x.arc(fx,fy,r+5,0,6.2832);x.fillStyle=MEMBERS[k].c;x.fill();x.beginPath();x.arc(fx,fy,r,0,6.2832);x.clip();const im=IFACE[k];if(im&&im.complete)x.drawImage(im,fx-r,fy-r,r*2,r*2);x.restore();
+      x.save();x.globalAlpha=iClamp(p);x.font='700 15px "Atkinson Hyperlegible"';x.fillStyle='#eaf6ff';x.textAlign='center';x.fillText(MEMBERS[k].short,fx,fy+58);x.restore()}}
+  // ---- iris into the paper world ----
+  const ir=iEase(iSeg(t,14.25,15));if(ir>0){x.save();x.setTransform(1,0,0,1,0,0);x.beginPath();const RR=ir*820;
+    for(let a=0;a<=64;a++){const an=a/64*6.2832,w=RR*(1+.025*Math.sin(an*9+t*8));a?x.lineTo(ICX+Math.cos(an)*w,ICY+Math.sin(an)*w):x.moveTo(ICX+Math.cos(an)*w,ICY+Math.sin(an)*w)}
+    x.closePath();x.fillStyle='#cfa877';x.fill();x.restore()}
+  // gentle vignette
+  x.save();x.setTransform(1,0,0,1,0,0);x.globalAlpha=1-ir;x.drawImage(IVG,0,0);x.restore();
+}
+try{document.fonts&&document.fonts.ready.then(()=>{if(T<INTRO)drawIntro(T)})}catch(e){}
+
+/* ---------- opening soundtrack, made in the browser ---------- */
+// Rendered once with an OfflineAudioContext, turned into a WAV and played by an <audio> element,
+// so it uses the same clock logic as the members' voices.
+let INTRO_A=null;
+async function buildIntroSound(){
+  const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(!OAC)return;
+  const SR=44100,ac=new OAC(2,Math.ceil(SR*INTRO),SR);
+  const comp=ac.createDynamicsCompressor();comp.threshold.value=-16;comp.ratio.value=4;comp.connect(ac.destination);
+  const master=ac.createGain();master.gain.value=.78;master.connect(comp);
+  // simple room reverb
+  const rev=ac.createConvolver(),ir=ac.createBuffer(2,SR*2.2,SR);for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2.6)}
+  rev.buffer=ir;const revG=ac.createGain();revG.gain.value=.32;rev.connect(revG);revG.connect(master);
+  const out=(node,wet=.3)=>{node.connect(master);if(wet){const s=ac.createGain();s.gain.value=wet;node.connect(s);s.connect(rev)}};
+  const nb=ac.createBuffer(1,SR*2,SR),nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1;
+  const noise=(t0,dur)=>{const s=ac.createBufferSource();s.buffer=nb;s.loop=true;s.start(t0);s.stop(t0+dur+.05);return s};
+  const env=(g,t0,a,hold,r,peak)=>{g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(peak,t0+a);g.gain.setValueAtTime(peak,t0+a+hold);g.gain.linearRampToValueAtTime(0,t0+a+hold+r)};
+  const pad=(fr,t0,t1,vol)=>{const f=ac.createBiquadFilter();f.type='lowpass';f.Q.value=.7;f.frequency.setValueAtTime(380,t0);f.frequency.linearRampToValueAtTime(1500,t1);
+    const g=ac.createGain();env(g,t0,1.1,Math.max(0,t1-t0-1.8),.7,vol);f.connect(g);out(g,.5);
+    fr.forEach(fq=>[-6,6].forEach(dt=>{const o=ac.createOscillator();o.type='sawtooth';o.frequency.value=fq;o.detune.value=dt;o.connect(f);o.start(t0);o.stop(t1+.1)}))};
+  const kick=(t0,v=.8)=>{const o=ac.createOscillator(),g=ac.createGain();o.frequency.setValueAtTime(130,t0);o.frequency.exponentialRampToValueAtTime(42,t0+.22);g.gain.setValueAtTime(v,t0);g.gain.exponentialRampToValueAtTime(.001,t0+.38);o.connect(g);out(g,0);o.start(t0);o.stop(t0+.4)};
+  const hat=(t0,v=.09)=>{const s=noise(t0,.06),f=ac.createBiquadFilter(),g=ac.createGain();f.type='highpass';f.frequency.value=7500;g.gain.setValueAtTime(v,t0);g.gain.exponentialRampToValueAtTime(.001,t0+.05);s.connect(f);f.connect(g);out(g,.1)};
+  const whoosh=(t0,dur,v=.45)=>{const s=noise(t0,dur),f=ac.createBiquadFilter(),g=ac.createGain();f.type='bandpass';f.Q.value=1.4;f.frequency.setValueAtTime(220,t0);f.frequency.exponentialRampToValueAtTime(5200,t0+dur);env(g,t0,dur*.75,0,dur*.25,v);s.connect(f);f.connect(g);out(g,.5)};
+  const impact=(t0,v=1)=>{const o=ac.createOscillator(),g=ac.createGain();o.frequency.setValueAtTime(78,t0);o.frequency.exponentialRampToValueAtTime(26,t0+1.3);g.gain.setValueAtTime(v,t0);g.gain.exponentialRampToValueAtTime(.001,t0+1.5);o.connect(g);out(g,.2);o.start(t0);o.stop(t0+1.6);
+    const s=noise(t0,1.2),f=ac.createBiquadFilter(),g2=ac.createGain();f.type='lowpass';f.frequency.setValueAtTime(5000,t0);f.frequency.exponentialRampToValueAtTime(300,t0+1);g2.gain.setValueAtTime(.5*v,t0);g2.gain.exponentialRampToValueAtTime(.001,t0+1.1);s.connect(f);f.connect(g2);out(g2,.6)};
+  const pluck=(t0,fq,v=.32)=>{[['triangle',1,v],['sine',2,v*.35]].forEach(([ty,mul,vv])=>{const o=ac.createOscillator(),g=ac.createGain();o.type=ty;o.frequency.value=fq*mul;g.gain.setValueAtTime(vv,t0);g.gain.exponentialRampToValueAtTime(.001,t0+.9);o.connect(g);out(g,.55);o.start(t0);o.stop(t0+1)})};
+  const bell=(t0,fq,v=.12)=>{const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=fq;g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(v,t0+.01);g.gain.exponentialRampToValueAtTime(.001,t0+1.6);o.connect(g);out(g,.8);o.start(t0);o.stop(t0+1.7)};
+  const riser=(t0,t1,v=.25)=>{const o=ac.createOscillator(),g=ac.createGain(),f=ac.createBiquadFilter();o.type='sawtooth';o.frequency.setValueAtTime(180,t0);o.frequency.exponentialRampToValueAtTime(1400,t1);f.type='lowpass';f.frequency.setValueAtTime(600,t0);f.frequency.exponentialRampToValueAtTime(6000,t1);g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(v,t1-.05);g.gain.linearRampToValueAtTime(0,t1);o.connect(f);f.connect(g);out(g,.4);o.start(t0);o.stop(t1+.05)};
+  // drone and chords: A minor, F, C
+  {const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=55;env(g,0,1.5,9.8,.8,.22);o.connect(g);out(g,.2);o.start(0);o.stop(12.2)}
+  pad([220,261.6,329.6],0,6.2,.05);pad([174.6,220,261.6],6,11.9,.05);pad([261.6,329.6,392],11.8,15,.055);
+  [0.4,0.9,1.6,2.2].forEach((tt,i)=>bell(tt,[1318,1568,1760,2093][i],.06));
+  whoosh(2.55,.65);impact(3.2,.9);riser(2.4,3.2,.12);
+  for(let tt=3.2;tt<11.7;tt+=.5)kick(tt,tt<6?.45:.6);
+  for(let tt=6.25;tt<11.7;tt+=.5)hat(tt);
+  whoosh(5.55,.6,.35);whoosh(6,.7,.3);
+  [440,523.3,659.3,784,880].forEach((fq,k)=>{pluck(6.7+k,fq);pluck(6.95+k,fq*1.5,.14)});
+  riser(10.7,11.8,.22);whoosh(11.15,.65,.5);impact(11.8,1.1);
+  [12.1,12.35,12.6,12.9,13.3,13.6].forEach((tt,i)=>bell(tt,[1046.5,1318.5,1568,1760,2093,2637][i],.09));
+  whoosh(14.15,.8,.35);kick(14.95,.5);
+  const buf=await ac.startRendering();
+  // encode 16 bit stereo WAV
+  const n=buf.length,L=buf.getChannelData(0),Rc=buf.getChannelData(1),ab=new ArrayBuffer(44+n*4),dv=new DataView(ab);
+  const ws=(o,s)=>{for(let i=0;i<s.length;i++)dv.setUint8(o+i,s.charCodeAt(i))};
+  ws(0,'RIFF');dv.setUint32(4,36+n*4,true);ws(8,'WAVE');ws(12,'fmt ');dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,2,true);dv.setUint32(24,SR,true);dv.setUint32(28,SR*4,true);dv.setUint16(32,4,true);dv.setUint16(34,16,true);ws(36,'data');dv.setUint32(40,n*4,true);
+  for(let i=0,o=44;i<n;i++,o+=4){dv.setInt16(o,Math.max(-1,Math.min(1,L[i]))*32767,true);dv.setInt16(o+2,Math.max(-1,Math.min(1,Rc[i]))*32767,true)}
+  const a=new Audio();a.preload='auto';a.src=URL.createObjectURL(new Blob([ab],{type:'audio/wav'}));a.addEventListener('playing',()=>{a._starting=false});INTRO_A=a;
+}
+buildIntroSound().catch(()=>{});
+
 let capWords=null,curWord=-1;const presenterEl=document.getElementById('presenter');const waveBars=[...document.querySelectorAll('.wave i')];
 // stop motion "boil": the paper edges re-cut a few times a second while playing
 const boil=$('boil');let seed=4;setInterval(()=>{if(!playing||RM)return;seed=seed%3+4;boil.setAttribute('seed',seed)},160);
 // While a part has a recording, the recording is the clock. Otherwise the frame timer is.
-const pauseVoices=except=>VOICE.forEach(v=>{if(v&&v!==except&&!v.paused){try{v.pause()}catch(e){}}if(v&&v!==except)v._starting=false});
+const pauseVoices=except=>[...VOICE,INTRO_A].forEach(v=>{if(v&&v!==except&&!v.paused){try{v.pause()}catch(e){}}if(v&&v!==except)v._starting=false});
 function loop(ts){if(!playing)return;
-  const si=partOf(T),a=VOICE[si];pauseVoices(a);
+  const inI=T<INTRO,si=partOf(T),a=inI?INTRO_A:VOICE[si],st=inI?0:STARTS[si],en=inI?INTRO:DURS[si];pauseVoices(a);
   // the audio is only ever moved when someone else changed T (a click, a key, a part jump), never because a frame ran late
   const seeked=loopT!==null&&Math.abs(T-loopT)>1e-6;
-  if(a&&a.readyState>=1&&!a._blocked&&T-STARTS[si]<DURS[si]){const t=T-STARTS[si],end=DURS[si];
+  if(a&&a.readyState>=1&&!a._blocked&&T>=st&&T-st<en){const t=T-st,end=en;
     if(a.paused){if(!a._starting&&t<end-.05){a._starting=true;try{if(Math.abs(a.currentTime-t)>.05)a.currentTime=t}catch(e){}const p=a.play();if(p&&p.catch)p.catch(()=>{a._starting=false;a._blocked=true})}}
     else if(seeked){try{a.currentTime=t}catch(e){}}
-    else if(!a.seeking)T=STARTS[si]+a.currentTime;
-    if(a.ended||T>=STARTS[si]+end-.03)T=STARTS[si]+end+.001;
+    else if(!a.seeking)T=st+a.currentTime;
+    if(a.ended||T>=st+end-.03)T=st+end+.001;
     last=ts}
   else{if(last)T+=Math.min(.25,(ts-last)/1000);last=ts}
   if(T>=TOTAL-0.01){T=TOTAL-0.001;update();loopT=null;togglePlay();return}update();loopT=T;requestAnimationFrame(loop)}
